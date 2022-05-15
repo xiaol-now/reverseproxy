@@ -48,10 +48,10 @@ func NewReverseProxy(u *url.URL) *httputil.ReverseProxy {
 
 func (h *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
-		if err := recover().(error); err != nil {
+		if err := recover(); err != nil {
 			log.Printf("proxy backend panic: %s", err)
 			w.WriteHeader(http.StatusBadGateway)
-			_, _ = w.Write([]byte(err.Error()))
+			_, _ = w.Write([]byte(err.(error).Error()))
 		}
 	}()
 	host, err := h.bl.Balance(GetClientIP(r))
