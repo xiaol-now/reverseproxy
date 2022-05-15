@@ -1,36 +1,44 @@
 package proxy
 
 import (
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"reverseproxy/balancer"
+	"sync"
 )
 
 type HTTPProxy struct {
-	Heartbeat
-
 	hostMap map[string]*httputil.ReverseProxy
 	bl      balancer.Balancer
+
+	// Heartbeat check
+	alive map[string]bool
+	mu    sync.RWMutex
 }
 
 func NewHTTPProxy(proxyPass []string, balanceMode string) (*HTTPProxy, error) {
 	hosts := make([]string, len(proxyPass))
 	hostMap := make(map[string]*httputil.ReverseProxy, len(proxyPass))
 	alive := make(map[string]bool, len(proxyPass))
-	for _, host := range proxyPass {
+	for i, host := range proxyPass {
 		u, err := url.Parse(host)
 		if err != nil {
 			return nil, err
 		}
 		hostMap[u.Host] = NewReverseProxy(u)
-		hosts = append(hosts, u.Host)
+		hosts[i] = u.Host
 		alive[host] = true
 	}
+	bl, err := balancer.Factory(balanceMode, hosts)
+	if err != nil {
+		return nil, err
+	}
 	return &HTTPProxy{
-		Heartbeat: Heartbeat{alive: alive},
-		hostMap:   hostMap,
-		bl:        balancer.Factory(balanceMode, hosts),
+		alive:   alive,
+		hostMap: hostMap,
+		bl:      bl,
 	}, nil
 }
 
@@ -39,8 +47,14 @@ func NewReverseProxy(u *url.URL) *httputil.ReverseProxy {
 }
 
 func (h *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// 处理请求失败的情况
-	host, err := h.bl.Balance(GetClientHost(r))
+	defer func() {
+		if err := recover().(error); err != nil {
+			log.Printf("proxy backend panic: %s", err)
+			w.WriteHeader(http.StatusBadGateway)
+			_, _ = w.Write([]byte(err.Error()))
+		}
+	}()
+	host, err := h.bl.Balance(GetClientIP(r))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		_, _ = w.Write([]byte("balance error: " + err.Error()))
