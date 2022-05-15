@@ -1,8 +1,15 @@
 package proxy
 
-import "sync"
+import "time"
 
-type Heartbeat struct {
-	alive map[string]bool
-	sync.RWMutex
+var ConnectionTimeout = 3 * time.Second
+
+func (h *HTTPProxy) Heartbeat(interval uint) {
+	for host := range h.alive {
+		go h.heartbeat(host, interval)
+	}
+}
+
+func (h *HTTPProxy) heartbeat(host string, interval uint) {
+
 }

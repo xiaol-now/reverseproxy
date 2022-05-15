@@ -35,11 +35,7 @@ func NewHTTPProxy(proxyPass []string, balanceMode string) (*HTTPProxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &HTTPProxy{
-		alive:   alive,
-		hostMap: hostMap,
-		bl:      bl,
-	}, nil
+	return &HTTPProxy{alive: alive, hostMap: hostMap, bl: bl}, nil
 }
 
 func NewReverseProxy(u *url.URL) *httputil.ReverseProxy {
