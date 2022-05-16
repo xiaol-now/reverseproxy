@@ -18,11 +18,18 @@ func StartProxyServer(config *Config) error {
 		router.Handle(host.Pattern, p)
 	}
 	if config.MaxAllowed > 0 {
-		router.Use(MaxAllowedMiddleware)
+		router.Use(MaxAllowedMiddleware(config.MaxAllowed))
 	}
 	return http.ListenAndServe(":"+strconv.Itoa(int(config.Port)), router)
 }
 
-func MaxAllowedMiddleware(handler http.Handler) http.Handler {
-	return handler
+func MaxAllowedMiddleware(n uint) mux.MiddlewareFunc {
+	max := make(chan struct{}, n)
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() { <-max }()
+			max <- struct{}{}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

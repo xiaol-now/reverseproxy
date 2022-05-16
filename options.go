@@ -43,7 +43,3 @@ func NewConfig(options ...Option) *Config {
 	}
 	return c
 }
-
-func (c *Config) Validation() error {
-	return nil
-}
