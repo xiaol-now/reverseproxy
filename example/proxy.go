@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"reverseproxy/proxy"
+	"reverseproxy"
 	"strconv"
 )
 
@@ -15,13 +15,15 @@ func main() {
 		go StartLocalHTTPServer(i)
 		hosts = append(hosts, "http://127.0.0.1:"+strconv.Itoa(i))
 	}
-	httpProxy, err := proxy.NewHTTPProxy(hosts, "round-robin")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	router := mux.NewRouter()
-	router.Handle("/abc", httpProxy)
-	log.Fatalln(http.ListenAndServe(":7777", router))
+	config := reverseproxy.NewConfig(
+		reverseproxy.WithPort(9999),
+		reverseproxy.WithHeartbeatInterval(5),
+		reverseproxy.WithMaxAllowed(100),
+		reverseproxy.WithProxyHosts([]reverseproxy.ProxyHost{
+			{Pattern: "/abc", Hosts: hosts, BalanceMode: "round-robin"},
+		}),
+	)
+	log.Fatalln(reverseproxy.StartProxyServer(config))
 }
 
 func StartLocalHTTPServer(port int) {

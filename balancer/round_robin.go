@@ -26,6 +26,11 @@ func (r *RoundRobin) Balance(_ string) (string, error) {
 func (r *RoundRobin) Add(host string) {
 	r.Lock()
 	defer r.Unlock()
+	for _, h := range r.hosts {
+		if h == host {
+			return
+		}
+	}
 	r.hosts = append(r.hosts, host)
 }
 
