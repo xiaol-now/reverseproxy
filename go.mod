@@ -1,4 +1,4 @@
-module reverseproxy
+module github.com/xiaol-now/reverseproxy
 
 go 1.18
 

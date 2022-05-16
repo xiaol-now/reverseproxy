@@ -1,11 +1,11 @@
 package proxy
 
 import (
+	"github.com/xiaol-now/reverseproxy/balancer"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"reverseproxy/balancer"
 	"sync"
 )
 

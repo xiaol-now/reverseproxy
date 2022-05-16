@@ -2,8 +2,8 @@ package reverseproxy
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/xiaol-now/reverseproxy/proxy"
 	"net/http"
-	"reverseproxy/proxy"
 	"strconv"
 )
 

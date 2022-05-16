@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/xiaol-now/reverseproxy"
 	"log"
 	"net/http"
-	"reverseproxy"
 	"strconv"
 )
 
